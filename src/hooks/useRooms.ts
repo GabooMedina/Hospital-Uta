@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 export const useRooms = () => {
   const [loadingRooms, setLoadingRooms] = useState(false);
