@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Loader2, ShieldCheck } from 'lucide-react';
+import { Lock, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react'; // 🚀 Importamos Eye y EyeOff
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,10 @@ const ResetPasswordPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // 🚀 Estados independientes para controlar la visibilidad de cada input
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -25,9 +29,12 @@ const ResetPasswordPage = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.warning('Contraseña muy corta', {
-        description: 'La contraseña debe tener un mínimo de 6 caracteres.',
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      toast.error('Contraseña insegura', {
+        description: 'Debe contener mínimo 8 caracteres, incluir letras mayúsculas, minúsculas y al menos un carácter especial (@, $, !, %, *, ?, &, #).',
+        duration: 6000
       });
       return;
     }
@@ -55,13 +62,14 @@ const ResetPasswordPage = () => {
             Restablecer Contraseña
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium text-xs sm:text-sm px-2 sm:px-4">
-            Por seguridad, ingresa una contraseña nueva que contenga al menos 6 caracteres.
+            Por seguridad, ingresa una contraseña que tenga un mínimo de 8 caracteres, incluyendo mayúsculas, minúsculas y un carácter especial.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="px-5 sm:px-8 pb-8 sm:pb-10">
           <form className="space-y-4 sm:space-y-5" onSubmit={handleResetPassword}>
             
+            {/* Input 1: Nueva Contraseña */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-xs font-bold uppercase ml-1 text-slate-600 tracking-wider">
                 Nueva Contraseña
@@ -70,16 +78,26 @@ const ResetPasswordPage = () => {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <Input 
                   id="password"
-                  type="password" 
+                  // 🚀 El tipo cambia dinámicamente entre 'password' y 'text'
+                  type={showPassword ? "text" : "password"} 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="••••••••" 
-                  className="pl-11 py-5 sm:py-6 rounded-xl sm:rounded-2xl bg-slate-50 border-slate-200 focus:ring-2 focus:ring-[#0b1d33] transition-all shadow-sm text-sm"
+                  placeholder="Mín. 8 caracteres (A, a, 1, #)" 
+                  className="pl-11 pr-11 py-5 sm:py-6 rounded-xl sm:rounded-2xl bg-slate-50 border-slate-200 focus:ring-2 focus:ring-[#0b1d33] transition-all shadow-sm text-sm"
                 />
+                {/* 🚀 Botón interactivo del Ojo incrustado a la derecha */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
+            {/* Input 2: Confirmar Contraseña */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword" className="text-xs font-bold uppercase ml-1 text-slate-600 tracking-wider">
                 Confirmar Contraseña
@@ -88,13 +106,22 @@ const ResetPasswordPage = () => {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <Input 
                   id="confirmPassword"
-                  type="password" 
+                  // 🚀 Cambia dinámicamente entre 'password' y 'text'
+                  type={showConfirmPassword ? "text" : "password"} 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  placeholder="••••••••" 
-                  className="pl-11 py-5 sm:py-6 rounded-xl sm:rounded-2xl bg-slate-50 border-slate-200 focus:ring-2 focus:ring-[#0b1d33] transition-all shadow-sm text-sm"
+                  placeholder="Repite tu nueva contraseña" 
+                  className="pl-11 pr-11 py-5 sm:py-6 rounded-xl sm:rounded-2xl bg-slate-50 border-slate-200 focus:ring-2 focus:ring-[#0b1d33] transition-all shadow-sm text-sm"
                 />
+                {/* 🚀 Botón interactivo del Ojo incrustado a la derecha */}
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

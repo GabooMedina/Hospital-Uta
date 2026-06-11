@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useForgotPassword } from '@/hooks/useForgotPassword'; // Importación de nuestro nuevo hook
+import { useForgotPassword } from '@/hooks/useForgotPassword';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
-  const { sendResetEmail, loading } = useForgotPassword(); // Extraemos las propiedades del hook
+  const { sendResetEmail, loading } = useForgotPassword();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();

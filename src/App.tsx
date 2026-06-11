@@ -3,19 +3,21 @@ import SignInPage from '@/modules/auth/SignInPage';
 import SignUpPage from '@/modules/auth/SignUpPage';
 import ForgotPasswordPage from '@/modules/auth/ForgotPasswordPage';
 import ResetPasswordPage from '@/modules/auth/ResetPasswordPage'; 
-import Dashboard from './modules/home/Dashboard';
-import { Toaster } from 'sonner'; 
 
-// Importación del Guardián de Seguridad
+// Importación de las nuevas vistas modularizadas
+import HomeLayout from './layout/HomeLayout'; 
+import { StudentsView } from './modules/students/StudentsView';
+import { RoomsView } from './modules/rooms/RoomsView';
+import { EquipmentView } from './modules/equipments/EquipmentView';
+import { Toaster } from 'sonner'; 
 import ProtectedRoute from '@/components/routes/ProtectedRoute';
+import { ConfigView } from './modules/admin/ConfigView';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ======================================================= */}
-        {/* RUTAS PÚBLICAS (Accesibles sin loguearse)              */}
-        {/* ======================================================= */}
+        {/* Rutas Públicas */}
         <Route path="/" element={<Navigate to="/signin" replace />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
@@ -23,45 +25,42 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* ======================================================= */}
-        {/* RUTAS PROTEGIDAS - EXCLUSIVAS ADMIN Y DOCENTE           */}
+        {/* RUTAS PROTEGIDAS ANIDADAS CON PREFIJO /DASHBOARD         */}
         {/* ======================================================= */}
         <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'DOCENTE']} />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<HomeLayout />}>
+            {/* Si entra a /dashboard seco, redirige por defecto a students */}
+            <Route index element={<Navigate to="students" replace />} />
+            
+            {/* Rutas Hijas Reales */}
+            <Route path="students" element={<StudentsView />} />
+            <Route path="rooms" element={<RoomsView />} />
+            <Route path="equipment" element={<EquipmentView />} />
+            <Route path="settings" element={<ConfigView />} />
+          </Route>
         </Route>
 
-        {/* ======================================================= */}
-        {/* RUTAS PROTEGIDAS - EXCLUSIVAS ESTUDIANTES               */}
-        {/* ======================================================= */}
+        {/* Simulador Estudiantes */}
         <Route element={<ProtectedRoute allowedRoles={['ESTUDIANTE']} />}>
-          <Route 
-            path="/simulador" 
-            element={
-              <div className="min-h-screen bg-[#0b1d33] text-white flex flex-col items-center justify-center p-6">
-                <h1 className="text-3xl font-black text-[#c29b38] mb-2">ENTORNO DE SIMULACIÓN CLÍNICA</h1>
-                <p className="text-slate-300 text-sm">Cargando módulos de Realidad Virtual para Enfermería...</p>
-              </div>
-            } 
-          />
+          <Route path="/simulador" element={
+            <div className="min-h-screen bg-[#0b1d33] text-white flex flex-col items-center justify-center p-6">
+              <h1 className="text-3xl font-black text-[#c29b38] mb-2">ENTORNO DE SIMULACIÓN CLÍNICA</h1>
+              <p className="text-slate-300 text-sm">Cargando módulos de Realidad Virtual para Enfermería...</p>
+            </div>
+          } />
         </Route>
 
-        {/* ======================================================= */}
-        {/* MANEJO DE CONTROL 404 NO ENCONTRADO                    */}
-        {/* ======================================================= */}
-        <Route 
-          path="*" 
-          element={
-            <div className="min-h-screen bg-[#0b1d33] flex flex-col items-center justify-center text-white font-bold">
-              <h2 className="text-4xl text-red-500 mb-2">404</h2>
-              <p className="text-lg text-slate-400">Recurso institucional no encontrado</p>
-            </div>
-          } 
-        />
+        {/* 404 Control */}
+        <Route path="*" element={
+          <div className="min-h-screen bg-[#0b1d33] flex flex-col items-center justify-center text-white font-bold">
+            <h2 className="text-4xl text-red-500 mb-2">404</h2>
+            <p className="text-lg text-slate-400">Recurso institucional no encontrado</p>
+          </div>
+        } />
       </Routes>
-      
-      {/* Configuración global de Toasts */}
       <Toaster richColors position="top-center" closeButton />
     </BrowserRouter>
   );
 }
 
-export default App; 
+export default App;

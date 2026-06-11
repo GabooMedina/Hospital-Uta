@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Loader2,Eye, EyeOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ const SignInPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +52,7 @@ const SignInPage = () => {
 
           <div className="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-xl relative z-10 w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center overflow-hidden">
             <img
-              src="/img/logoUTA.png"
+              src="/img/Logito.png"
               alt="Logo UTA"
               className="w-full h-full object-contain scale-150" 
             />
@@ -59,7 +60,7 @@ const SignInPage = () => {
 
           <div className="relative z-10 w-full">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight mb-1 sm:mb-2 leading-tight uppercase text-[#c29b38]">
-              Hospital Universitario
+              Hospital Virtual UTA
             </h1>
             <p className="text-slate-300 font-medium text-xs sm:text-sm opacity-90 max-w-xs mx-auto">
               Innovación en simulación clínica y educación en salud.
@@ -79,7 +80,7 @@ const SignInPage = () => {
           <form className="space-y-4" onSubmit={handleLogin}>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-bold uppercase ml-1 text-slate-600">
-                Correo Institucional
+                Correo Electrónico
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -89,13 +90,13 @@ const SignInPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="ejemplo@uta.edu.ec"
+                  placeholder="usuario@email.com"
                   className="pl-10 rounded-xl bg-slate-50 border-slate-200 py-5 sm:py-6 focus:ring-[#0b1d33]"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
+          <div className="space-y-2">
               <Label htmlFor="password" className="text-xs font-bold uppercase ml-1 text-slate-600">
                 Contraseña
               </Label>
@@ -103,13 +104,20 @@ const SignInPage = () => {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="pl-10 rounded-xl bg-slate-50 border-slate-200 py-5 sm:py-6 focus:ring-[#0b1d33]"
+                  className="pl-10 pr-10 rounded-xl bg-slate-50 border-slate-200 py-5 sm:py-6 focus:ring-[#0b1d33]"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 

@@ -1,61 +1,91 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, ArrowLeft, Loader2 } from 'lucide-react';
+import { UserPlus, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSignUp } from '@/hooks/useSignUp'; // Importación de nuestro nuevo hook
+import { useSignUp } from '@/hooks/useSignUp'; 
 import { toast } from 'sonner';
 
 const SignUpPage = () => {
   const navigate = useNavigate();
-  const { signUpUser, loading } = useSignUp(); // Extraemos las propiedades del hook
+  const { signUpUser, loading } = useSignUp(); 
 
-  // Estados locales para el formulario
+  // Estados base comunes
   const [nombres, setNombres] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Control de Rol (3 = Estudiante, 2 = Docente)
+  const [rolId, setRolId] = useState('3');
+  
+  // Estados específicos condicionales
   const [semestre, setSemestre] = useState('');
   const [paralelo, setParalelo] = useState('');
+  const [materia, setMateria] = useState(''); 
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación previa obligatoria en los selectores de Shadcn
-    if (!semestre || !paralelo) {
+    // 1. VALIDACIÓN COMPUESTA SEGÚN EL ROL SELECCIONADO
+    if (rolId === '3' && (!semestre || !paralelo)) {
       toast.warning('Información incompleta', {
         description: 'Por favor, seleccione su semestre y paralelo académicos.',
       });
       return;
     }
 
-    // Armamos el objeto con el formato exacto de SignUpDto
-    const payload = {
+    if (rolId === '2' && !materia) {
+      toast.warning('Información incompleta', {
+        description: 'Por favor, seleccione la materia que imparte en el laboratorio.',
+      });
+      return;
+    }
+
+    // 2. MOTOR DE SEGURIDAD ROBUSTO PARA LA CONTRASEÑA (8 caracteres, Mayúscula, Minúscula, Especial)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      toast.error('Contraseña Insegura', {
+        description: 'Debe contener mínimo 8 caracteres, incluir mayúsculas, minúsculas y al menos un carácter especial (@, $, !, %, *, ?, &, #).',
+        duration: 6000
+      });
+      return;
+    }
+
+    // CONSTRUCCIÓN DEL PAYLOAD CON INTERRUPTOR SEMÁNTICO
+    const payload: Record<string, any> = {
       email,
       password,
-      nombres,
-      apellidos,
-      rol_id: 3, // Forzado a nivel de negocio: 3 representa ESTUDIANTE
-      semestre,  // Atributos de metadatos adicionales capturados por el trigger
-      paralelo,
+      nombres: nombres.trim(),
+      apellidos: apellidos.trim(),
+      rol_id: Number(rolId),
     };
 
-    // Despachamos la petición al backend a través de nuestro hook
+    if (rolId === '3') {
+      payload.semestre = semestre;
+      payload.paralelo = paralelo;
+    } else if (rolId === '2') {
+      payload.materia = materia; // Viaja el string exacto seleccionado en el combo box
+    }
+
     const success = await signUpUser(payload);
 
     if (success) {
-      // Limpieza de campos en caso de éxito
+      // Limpieza absoluta de campos
       setNombres('');
       setApellidos('');
       setEmail('');
       setPassword('');
       setSemestre('');
       setParalelo('');
+      setMateria('');
 
-      // Redirección controlada al Login tras 2 segundos
       setTimeout(() => {
         navigate('/signin');
       }, 2000);
@@ -66,7 +96,6 @@ const SignUpPage = () => {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-2 sm:p-4 py-6 sm:py-10">
       <Card className="max-w-2xl w-full rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl border-none overflow-hidden">
         
-        {/* Cabecera Azul Marino Responsiva */}
         <CardHeader className="bg-[#0b1d33] text-white text-center p-6 sm:py-8">
           <div className="bg-white/10 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 backdrop-blur-sm text-[#c29b38]">
             <UserPlus size={24} />
@@ -77,7 +106,6 @@ const SignUpPage = () => {
           </CardDescription>
         </CardHeader>
 
-        {/* Contenido adaptable a teléfonos móviles */}
         <CardContent className="p-4 sm:p-8">
           <form className="space-y-4 sm:space-y-5" onSubmit={handleSignUp}>
             
@@ -107,79 +135,116 @@ const SignUpPage = () => {
               </div>
             </div>
 
-            {/* Correo Institucional */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-bold uppercase ml-1 text-slate-600">Correo Institucional</Label>
-              <Input 
-                id="email"
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="usuario@uta.edu.ec" 
-                className="rounded-xl bg-slate-50 py-5 sm:py-6 focus:ring-[#0b1d33]" 
-              />
-            </div>
-
-            {/* Información Académica con Selectores Estructurados */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-              <div className="space-y-1 md:col-span-2 text-[#0b1d33] font-bold text-xs uppercase tracking-tight">
-                Información Académica Requerida
-              </div>
-              
-              {/* Select Semestre */}
-              <div className="space-y-2">
-                <Label htmlFor="semestre" className="text-[10px] font-bold uppercase text-slate-500">Semestre</Label>
-                <Select onValueChange={(value) => setSemestre(value)} value={semestre}>
-                  <SelectTrigger id="semestre" className="rounded-lg bg-white py-5 focus:ring-[#0b1d33]">
-                    <SelectValue placeholder="Seleccione Semestre" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1er Semestre</SelectItem>
-                    <SelectItem value="2">2do Semestre</SelectItem>
-                    <SelectItem value="3">3er Semestre</SelectItem>
-                    <SelectItem value="4">4to Semestre</SelectItem>
-                    <SelectItem value="5">5to Semestre</SelectItem>
-                    <SelectItem value="6">6to Semestre</SelectItem>
-                    <SelectItem value="7">7mo Semestre</SelectItem>
-                    <SelectItem value="8">8vo Semestre</SelectItem>
-                    <SelectItem value="9">9no Semestre</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Correo y Selección de Identificación de Rol */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="email" className="text-xs font-bold uppercase ml-1 text-slate-600">Correo Institucional</Label>
+                <Input 
+                  id="email"
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="usuario@email.com" 
+                  className="rounded-xl bg-slate-50 py-5 sm:py-6 focus:ring-[#0b1d33]" 
+                />
               </div>
 
-              {/* Select Paralelo */}
+              {/* SELECTOR PARA IDENTIFICACIÓN DE ROLES INSTITUCIONALES */}
               <div className="space-y-2">
-                <Label htmlFor="paralelo" className="text-[10px] font-bold uppercase text-slate-500">Paralelo</Label>
-                <Select onValueChange={(value) => setParalelo(value)} value={paralelo}>
-                  <SelectTrigger id="paralelo" className="rounded-lg bg-white py-5 focus:ring-[#0b1d33]">
-                    <SelectValue placeholder="Seleccione Paralelo" />
+                <Label htmlFor="rol" className="text-xs font-bold uppercase ml-1 text-slate-600">Tipo de Usuario</Label>
+                <Select onValueChange={(value) => setRolId(value)} value={rolId}>
+                  <SelectTrigger id="rol" className="rounded-xl bg-slate-50 py-5 sm:py-6 focus:ring-[#0b1d33] font-medium text-slate-700">
+                    <SelectValue placeholder="Seleccione Rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">Paralelo A</SelectItem>
-                    <SelectItem value="B">Paralelo B</SelectItem>
-                    <SelectItem value="C">Paralelo C</SelectItem>
-                    <SelectItem value="D">Paralelo D</SelectItem>
+                    <SelectItem value="3">Estudiante</SelectItem>
+                    <SelectItem value="2">Docente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {/* RENDERIZADO COMPUESTO DINÁMICO SEGÚN ROL SELECCIONADO */}
+            {rolId === '3' ? (
+              /* PANEL DE METADATA PARA ESTUDIANTES (RANGO CONFIGURADO DESDE 6TO HASTA 9NO) */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in duration-200">
+                <div className="space-y-1 md:col-span-2 text-[#0b1d33] font-bold text-xs uppercase tracking-tight">
+                  Información Académica Requerida
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="semestre" className="text-[10px] font-bold uppercase text-slate-500">Semestre</Label>
+                  <Select onValueChange={(value) => setSemestre(value)} value={semestre}>
+                    <SelectTrigger id="semestre" className="rounded-lg bg-white py-5 focus:ring-[#0b1d33]">
+                      <SelectValue placeholder="Seleccione Semestre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* 🚀 MODIFICADO: Rango específico ajustado para el ciclo clínico terminal */}
+                      {['6to', '7mo', '8vo', '9no'].map(s => (
+                        <SelectItem key={s} value={s}>{s} Semestre</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="paralelo" className="text-[10px] font-bold uppercase text-slate-500">Paralelo</Label>
+                  <Select onValueChange={(value) => setParalelo(value)} value={paralelo}>
+                    <SelectTrigger id="paralelo" className="rounded-lg bg-white py-5 focus:ring-[#0b1d33]">
+                      <SelectValue placeholder="Seleccione Paralelo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['A', 'B'].map(p => (
+                        <SelectItem key={p} value={p}>Paralelo {p}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ) : (
+              /* PANEL DE METADATA PARA DOCENTES (CONVERSIÓN EXITOSA A COMBOBOX) */
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 animate-in fade-in duration-200">
+                <Label htmlFor="materia" className="text-xs font-bold uppercase ml-1 text-[#0b1d33]">Asignatura</Label>
+                <Select onValueChange={(value) => setMateria(value)} value={materia}>
+                  <SelectTrigger id="materia" className="rounded-xl bg-white py-5 sm:py-6 focus:ring-[#0b1d33] font-medium text-slate-700">
+                    <SelectValue placeholder="Seleccione la Asignatura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* 🚀 ASIGNATURAS INSTITUCIONALES DEFINIDAS */}
+                    <SelectItem value="ENFERMERIA EN CUIDADOS CRITICOS">Enfermería en Cuidados Críticos</SelectItem>
+                    <SelectItem value="ENFERMERIA QUIRURGICA">Enfermería Quirúrgica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Contraseña */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-xs font-bold uppercase ml-1 text-slate-600">Establecer Contraseña</Label>
-              <Input 
-                id="password"
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Mínimo 6 caracteres" 
-                className="rounded-xl bg-slate-50 py-5 sm:py-6 focus:ring-[#0b1d33]" 
-              />
+              {/* 🚀 Envoltura relativa para posicionar el ojo */}
+              <div className="relative">
+                <Input 
+                  id="password"
+                  // 🚀 Alterna el tipo de entrada dinámicamente
+                  type={showPassword ? "text" : "password"} 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Mín. 8 caracteres" 
+                  className="rounded-xl bg-slate-50 py-5 sm:py-6 pr-11 focus:ring-[#0b1d33]" 
+                />
+                {/* 🚀 Botón interactivo absoluto del ojo */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
-            {/* Botón de Envío Dinámico enlazado al loading del hook */}
             <Button 
               type="submit"
               disabled={loading}
@@ -194,7 +259,6 @@ const SignUpPage = () => {
             </Button>
           </form>
 
-          {/* Enlace de Retorno */}
           <div className="mt-6 sm:mt-8 text-center pt-5 sm:pt-6 border-t border-slate-100">
             <Link 
               to="/signin" 

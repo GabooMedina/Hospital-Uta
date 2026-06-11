@@ -17,17 +17,21 @@ export const useSignUp = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        // Captura los errores devueltos por el ValidationPipe de NestJS
-        const errorMsg = Array.isArray(data.message) ? data.message[0] : data.message;
+        let errorMsg = Array.isArray(data.message) ? data.message[0] : data.message;
+        
+        if (errorMsg === 'User already registered') {
+          errorMsg = 'El correo ya se encuentra registrado en el sistema.';
+        }
+
         throw new Error(errorMsg || 'Error al procesar el registro');
       }
 
-      // Notificación de éxito con Sonner
       toast.success('¡Registro Exitoso!', {
+        description: 'Inicia Sesión en el Hospital Virtual UTA',
         duration: 4000,
       });
 
-      return true; // Indicador de éxito para el componente visual
+      return true; 
     } catch (error: any) {
       console.error('Error en SignUp Hook:', error.message);
       toast.error('Error en el registro', {

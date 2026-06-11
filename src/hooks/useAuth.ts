@@ -20,9 +20,6 @@ export const useAuth = () => {
         throw new Error(data.message || 'Credenciales inválidas institucionales.');
       }
 
-      // =========================================================================
-      // 🚀 RESTICCIÓN DE ENTORNO: Bloqueo de Estudiantes en el Portal Web
-      // =========================================================================
       if (data.user.rol === 'ESTUDIANTE') {
         throw new Error('ACCESO_ESTUDIANTE_VR'); 
       }
