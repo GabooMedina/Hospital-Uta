@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, ShieldAlert, Search } from 'lucide-react';
+import { Settings, ShieldAlert, Search, Clock, CheckCircle } from 'lucide-react'; 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,6 @@ export const ConfigView = () => {
 
   useEffect(() => { syncUsersTable(); }, []);
 
-  // 🚀 INTEGRACIÓN DEL HOOK DE PAGINACIÓN GENÉRICO
   const {
     searchTerm,
     setSearchTerm,
@@ -34,18 +33,43 @@ export const ConfigView = () => {
     prevPage,
   } = usePagination({
     data: usuarios,
-    searchFields: ['nombre', 'correo'], // Filtra por nombre o mail
+    searchFields: ['nombre', 'correo', 'estado'], 
   });
 
-  const handleToggleRol = async (id: string, nombre: string, rolActual: string) => {
-    const nuevoRol = rolActual === 'Docente' || rolActual === 'DOCENTE' ? 'Estudiante' : 'Docente';
-    const success = await toggleUserRoleSystem(id, nuevoRol);
-    if (success) {
-      toast.success(`Privilegios actualizados`, {
-        description: `El usuario ${nombre} ahora tiene el rango de ${nuevoRol.toUpperCase()}.`
-      });
-      await syncUsersTable();
-    }
+  const handleToggleClick = (id: string, nombre: string, estadoActual: string) => {
+    const esActivacion = estadoActual !== 'activo';
+
+    toast.warning(
+      esActivacion ? `¿Autorizar acceso a ${nombre}?` : `¿Revocar acceso a ${nombre}?`, 
+      {
+        description: esActivacion 
+          ? 'El docente obtendrá acceso inmediato al panel de administración web.'
+          : 'Se suspenderán las credenciales web del docente de manera inmediata.',
+        duration: 8000,
+        position: 'top-center',
+        action: {
+          label: esActivacion ? 'Aprobar' : 'Revocar',
+          onClick: async () => {
+            // Si está activo lo pasa a 'Estudiante' (remover), si está pendiente mantiene 'Docente' (activar)
+            const proximoRol = estadoActual === 'activo' ? 'Estudiante' : 'Docente';
+            const success = await toggleUserRoleSystem(id, proximoRol);
+            
+            if (success) {
+              if (proximoRol === 'Docente') {
+                toast.success('Acceso Autorizado', {
+                  description: `El docente ${nombre} ha sido aprobado con éxito.`,
+                });
+              } else {
+                toast.info('Privilegios Revocados', {
+                  description: `Se han retirado las credenciales web de ${nombre}.`,
+                });
+              }
+              await syncUsersTable();
+            }
+          }
+        }
+      }
+    );
   };
 
   return (
@@ -57,15 +81,14 @@ export const ConfigView = () => {
             Control de Privilegios e Identidad de Personal
           </h3>
           <p className="text-xs text-slate-500 mt-1">
-            Activa el interruptor para elevar los privilegios de un usuario al rango de Docente dentro del hospital virtual.
+            Gestione el acceso del personal docente. Active el interruptor para aprobar o desactivar las credenciales clínicas web.
           </p>
         </div>
 
-        {/* 🚀 BARRA DE BÚSQUEDA EN CONFIGURACIÓN */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <Input 
-            placeholder="Buscar usuario o correo..." 
+            placeholder="Buscar docente..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 h-9 rounded-xl bg-slate-50 border-slate-200 text-xs focus-visible:ring-[#0b1d33]"
@@ -84,14 +107,15 @@ export const ConfigView = () => {
                   <TableHead className="font-bold text-[#0b1d33]">Usuario</TableHead>
                   <TableHead className="font-bold text-[#0b1d33]">Correo Electrónico</TableHead>
                   <TableHead className="font-bold text-[#0b1d33] text-center w-36">Rol Asignado</TableHead>
-                  <TableHead className="font-bold text-[#0b1d33] text-center w-40">Privilegio Docente</TableHead>
+                  <TableHead className="font-bold text-[#0b1d33] text-center w-40">Estado de Acceso</TableHead>
+                  <TableHead className="font-bold text-[#0b1d33] text-center w-40">Control de Acceso</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentUsuarios.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-slate-400 text-xs font-medium">
-                      No se encontraron identidades registradas que coincidan.
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-400 text-xs font-medium">
+                      No se encontraron docentes registrados en el sistema.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -104,26 +128,47 @@ export const ConfigView = () => {
                           className={
                             usuario.rol === 'Docente' || usuario.rol === 'DOCENTE' 
                               ? 'bg-amber-50 text-amber-800 border border-amber-200 font-bold' 
-                              : usuario.rol === 'ADMIN' 
-                              ? 'bg-blue-50 text-blue-800 border border-blue-200 font-black'
-                              : 'bg-slate-100 text-slate-600'
+                              : 'bg-blue-50 text-blue-800 border border-blue-200 font-black'
                           }
                         >
                           {usuario.rol}
                         </Badge>
                       </TableCell>
+                      
+                      <TableCell className="text-center">
+                        <Badge 
+                          className={
+                            usuario.estado === 'pendiente'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse font-bold flex items-center gap-1 justify-center w-28 mx-auto'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium flex items-center gap-1 justify-center w-28 mx-auto'
+                          }
+                        >
+                          {usuario.estado === 'pendiente' ? (
+                            <>
+                              <Clock size={12} />
+                              POR VALIDAR
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle size={12} />
+                              ACTIVO
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center">
                           {usuario.rol === 'ADMIN' ? (
-                            <div className="text-slate-300 p-1" title="Cuenta de administrador protegida">
+                            <div className="text-slate-300 p-1">
                               <ShieldAlert size={16} className="mx-auto" />
                             </div>
                           ) : (
                             <label className="relative inline-flex items-center cursor-pointer select-none">
                               <input 
                                 type="checkbox" 
-                                checked={usuario.rol === 'Docente' || usuario.rol === 'DOCENTE'} 
-                                onChange={() => handleToggleRol(usuario.id, usuario.nombre, usuario.rol)} 
+                                checked={usuario.estado === 'activo'} 
+                                onChange={() => handleToggleClick(usuario.id, usuario.nombre, usuario.estado)} 
                                 className="sr-only peer" 
                               />
                               <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0b1d33]"></div>
@@ -137,7 +182,6 @@ export const ConfigView = () => {
               </TableBody>
             </Table>
 
-            {/* 🚀 CONTROLES COMPARTIDOS */}
             <PaginationControls
               currentPage={currentPage}
               totalPages={totalPages}

@@ -14,7 +14,7 @@ export const useAdmin = () => {
 
   // ENDPOINT 1: Cargar la lista global con roles (Para el Tab de Configuración / Toggle)
   const fetchUsuariosSystem = async () => {
-    setLoading(true); // 🎛️ ACTIVADO: Dispara el Spinner en ConfigView
+    setLoading(true); 
     try {
       const res = await fetch('https://hospital-uta-backend-production.up.railway.app/admin/usuarios', {
         headers: getHeaders()
@@ -31,9 +31,9 @@ export const useAdmin = () => {
     }
   };
 
-  // 🔀 ENDPOINT 2: Toggle Bar de Roles (Asciende/Desciende privilegios)
+  //  ENDPOINT 2: Toggle Bar de Roles (Asciende/Desciende privilegios)
   const toggleUserRoleSystem = async (id: string, nuevoRol: string) => {
-    setLoading(true); // 🎛️ OPTIMIZADO: Bloquea botones mientras procesa el cambio
+    setLoading(true); 
     try {
       const res = await fetch(`https://hospital-uta-backend-production.up.railway.app/admin/usuarios/${id}/toggle-role`, {
         method: 'PATCH',

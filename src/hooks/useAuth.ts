@@ -8,7 +8,7 @@ export const useAuth = () => {
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const response = await fetch('https://hospital-uta-backend-production.up.railway.app/auth/login ', {
+      const response = await fetch('https://hospital-uta-backend-production.up.railway.app/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass }),
@@ -20,11 +20,12 @@ export const useAuth = () => {
         throw new Error(data.message || 'Credenciales inválidas institucionales.');
       }
 
-      if (data.user.rol === 'ESTUDIANTE') {
+      const rolUsuario = data.user?.rol?.toUpperCase() || '';
+
+      if (rolUsuario === 'ESTUDIANTE') {
         throw new Error('ACCESO_ESTUDIANTE_VR'); 
       }
 
-      // Si es ADMIN o DOCENTE, guardamos la sesión de forma normal
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
@@ -43,4 +44,4 @@ export const useAuth = () => {
   };
 
   return { login, loading, logout };
-};    
+};

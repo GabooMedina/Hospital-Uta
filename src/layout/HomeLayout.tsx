@@ -95,7 +95,7 @@ const HomeLayout = () => {
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">
           <div className="flex flex-col">
             <h2 className="text-lg font-bold text-[#0b1d33]">
-              {currentPath.includes('/students') && 'Gestión de Alumnos'}
+              {currentPath.includes('/students') && 'Gestión de Estudiantes'}
               {currentPath.includes('/rooms') && 'Salas de Simulación'}
               {currentPath.includes('/equipment') && 'Catálogo de Equipos Médicos'}
               {currentPath.includes('/settings') && 'Configuración de Sistema'}

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Lock, User, Loader2,Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner'; 
+import { toast } from 'sonner';
 
 const SignInPage = () => {
   const [email, setEmail] = useState('');
@@ -25,18 +25,20 @@ const SignInPage = () => {
         });
       }
     } catch (error: any) {
-      // =========================================================================
-      // 🚀 CAPTURA DEL CONTROL DE ROL VR EN INTERFAZ
-      // =========================================================================
-      if (error.message === 'ACCESO_ESTUDIANTE_VR') {
+      if (error.message === 'CUENTA_DOCENTE_PENDIENTE') {
+        toast.warning('Autorización en Proceso', {
+          description: 'Su registro como Docente se encuentra en revisión. Por favor, espere a que el Administrador apruebe su cuenta desde la plataforma.',
+          duration: 7000,
+        });
+      } else if (error.message === 'ACCESO_ESTUDIANTE_VR') {
         toast.info('Acceso restringido en plataforma Web', {
           description: 'Tu cuenta de Estudiante está activa. Por favor, inicia sesión directamente dentro del simulador virtual en las gafas VR.',
           duration: 6000,
         });
       } else {
         toast.error('Error de autenticación', {
-          description: 'Las credenciales ingresadas son incorrectas o no están registradas.',
-          duration: 4000,
+          description: error.message || 'Las credenciales ingresadas son incorrectas o no están registradas.',
+          duration: 6000,
         });
       }
     }
@@ -54,7 +56,7 @@ const SignInPage = () => {
             <img
               src="/img/Logito.png"
               alt="Logo UTA"
-              className="w-full h-full object-contain scale-150" 
+              className="w-full h-full object-contain scale-150"
             />
           </div>
 
@@ -96,7 +98,7 @@ const SignInPage = () => {
               </div>
             </div>
 
-          <div className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="password" className="text-xs font-bold uppercase ml-1 text-slate-600">
                 Contraseña
               </Label>
@@ -124,9 +126,8 @@ const SignInPage = () => {
             <div className="flex justify-end">
               <Link
                 to={loading ? "#" : "/forgot-password"}
-                className={`text-xs font-bold text-[#c29b38] hover:underline ${
-                  loading ? "pointer-events-none opacity-50" : ""
-                }`}
+                className={`text-xs font-bold text-[#c29b38] hover:underline ${loading ? "pointer-events-none opacity-50" : ""
+                  }`}
               >
                 ¿Olvidaste tu contraseña?
               </Link>
@@ -157,7 +158,7 @@ const SignInPage = () => {
         </CardContent>
       </Card>
     </div>
-  );  
+  );
 };
 
 export default SignInPage;
